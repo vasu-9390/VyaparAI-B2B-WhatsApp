@@ -1,0 +1,23 @@
+{
+  "name": "vyapar-ai",
+  "version": "1.0.0",
+  "description": "VyaparAI — AI WhatsApp B2B Quotation & Order Orchestrator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "test:server": "npm test --prefix server",
+    "seed": "npm run seed --prefix server"
+  },
+  "keywords": [
+    "b2b",
+    "whatsapp",
+    "ai",
+    "quotations",
+    "order-management",
+    "gemini"
+  ],
+  "author": "VyaparAI Engineering Team",
+  "license": "UNLICENSED"
+}
