@@ -16,22 +16,29 @@ const app = express();
 // 1. HTTP Security Headers
 app.use(helmet());
 
-// 2. CORS configuration
+// 2. CORS Configuration
 const allowedOrigins = [
+  'https://vyapar-ai-b2-b-whats-app.vercel.app',
   env.FRONTEND_URL,
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:5174',
   'http://127.0.0.1:5174',
-];
+].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests without an Origin header
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) {
         return callback(null, true);
       }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.error(`CORS blocked origin: ${origin}`);
 
       return callback(
         new Error(`Origin ${origin} not allowed by CORS`)
