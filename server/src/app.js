@@ -1,4 +1,3 @@
-
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -13,12 +12,13 @@ import { sendError } from './utils/apiResponse.js';
 
 const app = express();
 
-// 1. HTTP Security Headers
+// 1. Security headers
 app.use(helmet());
 
-// 2. CORS Configuration
+// 2. Allowed frontend origins
 const allowedOrigins = [
   'https://vyapar-ai-b2-b-whats-app.vercel.app',
+  'https://vyapar-ai-b2-b-whats-app-git-main-vasu21.vercel.app',
   env.FRONTEND_URL,
   'http://localhost:5173',
   'http://127.0.0.1:5173',
@@ -26,48 +26,57 @@ const allowedOrigins = [
   'http://127.0.0.1:5174',
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests without an Origin header
-      if (!origin) {
-        return callback(null, true);
-      }
+// Remove duplicate origins.
+const uniqueOrigins = [...new Set(allowedOrigins)];
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow requests without an Origin header, such as server-to-server requests.
+    if (!origin) {
+      return callback(null, true);
+    }
 
-      console.error(`CORS blocked origin: ${origin}`);
+    if (uniqueOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      return callback(
-        new Error(`Origin ${origin} not allowed by CORS`)
-      );
-    },
-    credentials: true,
-    methods: [
-      'GET',
-      'POST',
-      'PUT',
-      'PATCH',
-      'DELETE',
-      'OPTIONS',
-    ],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'X-Hub-Signature-256',
-    ],
-  })
-);
+    console.error(`CORS blocked origin: ${origin}`);
 
-// 3. Body and Cookie Parsers
+    return callback(
+      new Error(`Origin ${origin} not allowed by CORS`)
+    );
+  },
+
+  credentials: true,
+
+  methods: [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+  ],
+
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'X-Hub-Signature-256',
+  ],
+
+  optionsSuccessStatus: 204,
+};
+
+// Register CORS before routes so preflight requests are handled.
+app.use(cors(corsOptions));
+
+// 3. Parse request bodies and cookies
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// 4. Request Logging
+// 4. Request logging
 if (env.NODE_ENV !== 'test') {
   app.use(
     morgan(
@@ -76,13 +85,13 @@ if (env.NODE_ENV !== 'test') {
   );
 }
 
-// 5. Rate Limiting
+// 5. API rate limiting
 app.use('/api', apiLimiter);
 
-// 6. Mount API Routes
+// 6. Mount API routes
 app.use('/api', apiRoutes);
 
-// 7. 404 Not Found Handler
+// 7. Handle unknown routes
 app.use((req, res) => {
   return sendError(
     res,
@@ -92,7 +101,7 @@ app.use((req, res) => {
   );
 });
 
-// 8. Centralized Error Handler
+// 8. Centralized error handler
 app.use(errorHandler);
 
 export default app;
